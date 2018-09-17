@@ -9,7 +9,7 @@ def readDataFromXlsx(file_name, sheet_name,XLSX_PATH=""):
     non_hangup_datas = []
     hangup_datas = []
     hangup2_datas = []
-
+    if XLSX_PATH[-1] != "\\": XLSX_PATH = XLSX_PATH + "\\"
     wb = load_workbook(XLSX_PATH+ file_name)
     try:
         sheet = wb[ sheet_name ]

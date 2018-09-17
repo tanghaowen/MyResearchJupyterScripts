@@ -57,40 +57,32 @@ def get_min_coh(boundary_line_mus, boundary_line_cohs):
     if len(chos) == 0: return 0
     return sum(chos) / len(chos)
 
+def plot_exit_hang_up_figure(root_dir, filename, sheet_name, xrange=[-1,15e4],yrange=[0,4],title=None,titlesize=30,hangeup_text_position=(4e4, 2.25)):
+    d1, d2, d3 = readDataFromXlsx(filename, sheet_name, root_dir)
+    d1 = np.array(d1)
+    d2 = np.array(d2)
+    d3 = np.array(d3)
+    
 
-def plot_hang_up_figure(root_dir, filename, D=None, H=None, min_coh=None):
-    # 从csv文件中读取数据
-    if not root_dir == None:
-        path = root_dir + "/" + filename
-    else:
-        path = filename
-    f = codecs.open(path, encoding='utf-8')
-    normal_mu, normal_coh, hang_up_mu, hang_up_coh = np.genfromtxt(f, delimiter=",", usecols=(0, 1, 2, 3), unpack=True,
-                                                                   skip_header=True)
-    f.close()
     # 绘制散点
-    plt.scatter(normal_coh, normal_mu, c="b", s=120)
-    plt.scatter(hang_up_coh, hang_up_mu, marker="s", c="r", s=120)
+    plt.scatter(d1[:, 1], d1[:, 0], c="b", s=120)
+    plt.scatter(d2[:, 1], d2[:, 0], marker="s", c="r", s=120)
+    if len(d3) > 0:
+        plt.scatter(d3[:, 1], d3[:, 0], marker="^", c="g", s=120)
 
     # 计算鼻塞和非闭塞的边界线，并绘制曲线
-    boundary_line_mus, boundary_line_cohs = get_boundary_line(normal_mu, normal_coh, hang_up_mu, hang_up_coh)
+    if len(d3) > 0:
+        boundary_line_mus, boundary_line_cohs = get_boundary_line(d1[:, 0], d1[:, 1], np.append(d2[:, 0], d3[:, 0]),
+                                                     np.append(d2[:, 1], d3[:, 1]))
+    else: 
+        boundary_line_mus, boundary_line_cohs = get_boundary_line(d1[:, 0], d1[:, 1], d2[:, 0],d2[:, 1])
     plt.plot(boundary_line_cohs, boundary_line_mus)
 
-    # 计算界限粘着力并绘制直线和Minium Cohesion的标注
-    if min_coh == None:
-        min_coh = get_min_coh(boundary_line_mus, boundary_line_cohs)
-    elif min_coh == "off":
-        pass
-    if not (min_coh == "off"):
-        plt.axvline(min_coh, ls='-', color='g', linewidth=3)
-    anotate_text = '$Minium\ Cohesion$\n$' + "{:.2e}".format(Decimal(min_coh)).replace("e+", r"\times10^{") + '}$'
-    plt.annotate(anotate_text, xy=(min_coh, 0), xytext=(1e4, 1),
-                 arrowprops=dict(facecolor='black', shrink=0.01, width=1), fontsize=12)
     # *** 图表的格式调整 ***
     # 指定x轴为科学计数法
     plt.ticklabel_format(style='sci', axis='x', scilimits=(0, 0), useMathText=True)
     # 指定图表的x轴y轴坐标的取值范围
-    plt.axis([0, 15e4, 0, 4])
+    plt.axis(xrange+yrange)
     # x坐标轴名字
     plt.xlabel(r"Cohesion $\mathrm{N/m^2}$", size=20)
     # y坐标轴名字
@@ -101,11 +93,28 @@ def plot_hang_up_figure(root_dir, filename, D=None, H=None, min_coh=None):
     # 调整x轴启用科学计数法后，10^n文字过小问题
     plt.gca().xaxis.get_offset_text().set_fontsize(15)
     # 设置图表title
-    if not D == None and not H == None:    plt.title("D%s %.1fH" % (str(D), H), size=30)
+    if title is not None: plt.title(title, size=titlesize)
     # 绘制图表格子
     plt.grid()
     # 绘制图表中右边的Hang_Up Region文字
-    plt.text(10e4, 2.5, 'Hang-Up\nRegion', size=20)
+    plt.text(hangeup_text_position[0], hangeup_text_position[1], r'Hang-Up Region', size=20)
+
+    return boundary_line_mus, boundary_line_cohs
+
+def plot_hang_up_figure(root_dir, filename, sheet_name, min_coh=None ,xrange=[0,15e4],yrange=[0,10],title=None,titlesize=30,hangeup_text_position=(8e4,6),anotate_position=(5e4,4)):
+    boundary_line_mus, boundary_line_cohs = plot_exit_hang_up_figure(root_dir, filename, sheet_name,xrange=xrange,yrange=yrange,title=title,titlesize=titlesize,hangeup_text_position=hangeup_text_position)
+
+    # 计算界限粘着力并绘制直线和Minium Cohesion的标注
+    if min_coh == None:
+        min_coh = get_min_coh(boundary_line_mus, boundary_line_cohs)
+    elif min_coh == "off":
+        pass
+    if not (min_coh == "off"):
+        plt.axvline(min_coh, ls='-', color='g', linewidth=3)
+    
+    anotate_text = '$Minium\ Cohesion$\n$' + "{:.2e}".format(Decimal(min_coh)).replace("e+", r"\times10^{") + '}$'
+    plt.annotate(anotate_text, xy=(min_coh, 0), xytext=anotate_position,
+                 arrowprops=dict(facecolor='black', shrink=0.01, width=1), fontsize=12)
 
     return
     df = read_mincho_map(root_dir + "/" + "min_coh_map.csv")
@@ -117,43 +126,6 @@ def plot_hang_up_figure(root_dir, filename, D=None, H=None, min_coh=None):
     return df
 
 
-def plot_exit_hang_up_figure(root_dir, filename, sheet_name, D=None, H=None, min_coh=None):
-    d1, d2, d3 = readDataFromXlsx(filename, sheet_name, root_dir)
-    d1 = np.array(d1)
-    d2 = np.array(d2)
-    d3 = np.array(d3)
-    # 绘制散点
-    plt.scatter(d1[:, 1], d1[:, 0], c="b", s=120)
-    plt.scatter(d2[:, 1], d2[:, 0], marker="s", c="r", s=120)
-    plt.scatter(d3[:, 1], d3[:, 0], marker="^", c="g", s=120)
-
-    # 计算鼻塞和非闭塞的边界线，并绘制曲线
-    boundary_line_mus, boundary_line_cohs = get_boundary_line(d1[:, 0], d1[:, 1], np.append(d2[:, 0], d3[:, 0]),
-                                                              np.append(d2[:, 1], d3[:, 1]))
-    plt.plot(boundary_line_cohs, boundary_line_mus)
-
-    # *** 图表的格式调整 ***
-    # 指定x轴为科学计数法
-    plt.ticklabel_format(style='sci', axis='x', scilimits=(0, 0), useMathText=True)
-    # 指定图表的x轴y轴坐标的取值范围
-    plt.axis([-1e4, 15e4, 0, 4])
-    # x坐标轴名字
-    plt.xlabel(r"Cohesion $\mathrm{N/m^2}$", size=20)
-    # y坐标轴名字
-    plt.ylabel(r"Friction Coefficient", size=20)
-    # 调整xy坐标轴标签的文字大小
-    plt.xticks(fontsize=20)
-    plt.yticks(fontsize=20)
-    # 调整x轴启用科学计数法后，10^n文字过小问题
-    plt.gca().xaxis.get_offset_text().set_fontsize(15)
-    # 设置图表title
-    if not D == None or not H == None:   plt.title("D%s %.1fH" % (str(D), H), size=30)
-    # 绘制图表格子
-    plt.grid()
-    # 绘制图表中右边的Hang_Up Region文字
-    plt.text(4e4, 2.25, r'Hang-Up Region', size=20)
-
-    return
 
 
 def plot_experiment_resault(filename, title):
