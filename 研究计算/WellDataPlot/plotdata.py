@@ -58,6 +58,8 @@ def get_min_coh(boundary_line_mus, boundary_line_cohs):
     return sum(chos) / len(chos)
 
 def plot_exit_hang_up_figure(root_dir, filename, sheet_name, xrange=[-1,15e4],yrange=[0,4],title=None,titlesize=30,hangeup_text_position=(4e4, 2.25)):
+    ax = plt.gca()
+    
     d1, d2, d3 = readDataFromXlsx(filename, sheet_name, root_dir)
     d1 = np.array(d1)
     d2 = np.array(d2)
@@ -65,8 +67,8 @@ def plot_exit_hang_up_figure(root_dir, filename, sheet_name, xrange=[-1,15e4],yr
     
 
     # 绘制散点
-    plt.scatter(d1[:, 1], d1[:, 0], c="b", s=120)
-    plt.scatter(d2[:, 1], d2[:, 0], marker="s", c="r", s=120)
+    plt.scatter(d1[:, 1], d1[:, 0], c="b", s=120 )
+    plt.scatter(d2[:, 1], d2[:, 0], marker="s", c="r", s=120 )
     if len(d3) > 0:
         plt.scatter(d3[:, 1], d3[:, 0], marker="^", c="g", s=120)
 
@@ -93,12 +95,13 @@ def plot_exit_hang_up_figure(root_dir, filename, sheet_name, xrange=[-1,15e4],yr
     # 调整x轴启用科学计数法后，10^n文字过小问题
     plt.gca().xaxis.get_offset_text().set_fontsize(15)
     # 设置图表title
-    if title is not None: plt.title(title, size=titlesize)
+    # if title is not None: plt.title(title, size=titlesize)
     # 绘制图表格子
     plt.grid()
     # 绘制图表中右边的Hang_Up Region文字
     plt.text(hangeup_text_position[0], hangeup_text_position[1], r'Hang-Up Region', size=20)
-
+    mark_text = matplotlib.lines.Line2D([], [],color='white', marker='.', label=title)
+    plt.legend(handles=[mark_text],handlelength=0)
     return boundary_line_mus, boundary_line_cohs
 
 def plot_hang_up_figure(root_dir, filename, sheet_name, min_coh=None ,xrange=[0,15e4],yrange=[0,10],title=None,titlesize=30,hangeup_text_position=(8e4,6),anotate_position=(5e4,4)):
