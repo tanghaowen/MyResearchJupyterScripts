@@ -9,7 +9,7 @@ from WellDataPlot.ReadData import readDataFromXlsx
 
 
 def save_figure(folder_name, figure_name):
-    plt.savefig(folder_name + "/" + figure_name, transparent=False, dpi=80, bbox_inches="tight")
+    plt.savefig(folder_name + "/" + figure_name, transparent=False, dpi=150, bbox_inches="tight")
 
 
 # 閉塞と非閉塞の間の境界線を計算する関数
@@ -67,10 +67,10 @@ def plot_exit_hang_up_figure(root_dir, filename, sheet_name, xrange=[-1,15e4],yr
     
 
     # 绘制散点
-    plt.scatter(d1[:, 1], d1[:, 0], c="b", s=120 )
-    plt.scatter(d2[:, 1], d2[:, 0], marker="s", c="r", s=120 )
+    plt.scatter(d1[:, 1], d1[:, 0], c="b", s=120 , label="None Hang Up")
+    plt.scatter(d2[:, 1], d2[:, 0], marker="s", c="r", s=120 , label="Hang Up" )
     if len(d3) > 0:
-        plt.scatter(d3[:, 1], d3[:, 0], marker="^", c="g", s=120)
+        plt.scatter(d3[:, 1], d3[:, 0], marker="^", c="g", s=120, label="Hang Up(Exit)")
 
     # 计算鼻塞和非闭塞的边界线，并绘制曲线
     if len(d3) > 0:
@@ -101,7 +101,7 @@ def plot_exit_hang_up_figure(root_dir, filename, sheet_name, xrange=[-1,15e4],yr
     # 绘制图表中右边的Hang_Up Region文字
     plt.text(hangeup_text_position[0], hangeup_text_position[1], r'Hang-Up Region', size=20)
     mark_text = matplotlib.lines.Line2D([], [],color='white', marker='.', label=title)
-    plt.legend(handles=[mark_text],handlelength=0)
+    plt.legend(handles=[mark_text],handlelength=0,fontsize=15)
     return boundary_line_mus, boundary_line_cohs
 
 def plot_hang_up_figure(root_dir, filename, sheet_name, min_coh=None ,xrange=[0,15e4],yrange=[0,10],title=None,titlesize=30,hangeup_text_position=(8e4,6),anotate_position=(5e4,4)):
