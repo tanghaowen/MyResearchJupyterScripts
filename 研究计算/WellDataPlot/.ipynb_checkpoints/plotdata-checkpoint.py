@@ -6,7 +6,7 @@ from decimal import Decimal
 import matplotlib
 import pandas as pd
 from WellDataPlot.ReadData import readDataFromXlsx
-
+from numpy import trapz
 
 def save_figure(folder_name, figure_name):
     plt.savefig(folder_name + "/" + figure_name, transparent=False, dpi=150, bbox_inches="tight")
@@ -21,6 +21,7 @@ def get_boundary_line(normal_mus, normal_cohs, hang_up_mus, hange_up_cohs):
     hang_up_mus, hange_up_cohs, normal_mus, normal_cohs = normal_mus, normal_cohs, hang_up_mus, hange_up_cohs
     for normal_mu in normal_mus:
         if normal_mu in mus_used or not (normal_mu == normal_mu): continue
+        if normal_mu >4: continue
         mus_used.append(normal_mu)
 
         # 获取mu位置并计算这些位置中mu对应的coh最大值
@@ -41,12 +42,14 @@ def get_boundary_line(normal_mus, normal_cohs, hang_up_mus, hange_up_cohs):
         # 加入list
         boundary_line_mus.append(normal_mu)
         boundary_line_cohs.append(average_coh)
-
+    
     boundary_line_mus, boundary_line_cohs = zip(*sorted(zip(boundary_line_mus, boundary_line_cohs)))
-
-    # print(boundary_line_mus)
-    # print(boundary_line_cohs)
-    return boundary_line_mus, boundary_line_cohs
+    
+    area = trapz(boundary_line_cohs,boundary_line_mus,0.01)
+    print(area)
+    print(boundary_line_mus)
+    print(boundary_line_cohs)
+    return boundary_line_mus, boundary_line_cohs , area
 
 
 def get_min_coh(boundary_line_mus, boundary_line_cohs):
@@ -74,12 +77,12 @@ def plot_exit_hang_up_figure(root_dir, filename, sheet_name, xrange=[-1,15e4],yr
 
     # 计算鼻塞和非闭塞的边界线，并绘制曲线
     if len(d3) > 0:
-        boundary_line_mus, boundary_line_cohs = get_boundary_line(d1[:, 0], d1[:, 1], np.append(d2[:, 0], d3[:, 0]),
+        boundary_line_mus, boundary_line_cohs ,area = get_boundary_line(d1[:, 0], d1[:, 1], np.append(d2[:, 0], d3[:, 0]),
                                                      np.append(d2[:, 1], d3[:, 1]))
     else: 
-        boundary_line_mus, boundary_line_cohs = get_boundary_line(d1[:, 0], d1[:, 1], d2[:, 0],d2[:, 1])
+        boundary_line_mus, boundary_line_cohs ,area = get_boundary_line(d1[:, 0], d1[:, 1], d2[:, 0],d2[:, 1])
     plt.plot(boundary_line_cohs, boundary_line_mus)
-
+    #plt.text(1e4,0.4,str(area),size=12)
     # *** 图表的格式调整 ***
     # 指定x轴为科学计数法
     plt.ticklabel_format(style='sci', axis='x', scilimits=(0, 0), useMathText=True)
@@ -99,9 +102,9 @@ def plot_exit_hang_up_figure(root_dir, filename, sheet_name, xrange=[-1,15e4],yr
     # 绘制图表格子
     plt.grid()
     # 绘制图表中右边的Hang_Up Region文字
-    plt.text(hangeup_text_position[0], hangeup_text_position[1], r'Hang-Up Region', size=20)
-    mark_text = matplotlib.lines.Line2D([], [],color='white', marker='.', label=title)
-    plt.legend(handles=[mark_text],handlelength=0,fontsize=15)
+    #plt.text(hangeup_text_position[0], hangeup_text_position[1], r'Hang-Up Region', size=20)
+    #mark_text = matplotlib.lines.Line2D([], [],color='white', marker='.', label=title)
+    #plt.legend(handles=[mark_text],handlelength=0,fontsize=15)
     return boundary_line_mus, boundary_line_cohs
 
 def plot_hang_up_figure(root_dir, filename, sheet_name, min_coh=None ,xrange=[0,15e4],yrange=[0,10],title=None,titlesize=30,hangeup_text_position=(8e4,6),anotate_position=(5e4,4)):
